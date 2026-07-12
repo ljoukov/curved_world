@@ -2,6 +2,15 @@
 
 Concept screens for strange educational software from slightly incompatible universes.
 
+## Run the prototype
+
+```sh
+npm install
+npm run dev
+```
+
+The SvelteKit prototype recreates the Curved World lesson UI and includes local demo interactions. Realtime voice is intentionally left as a later integration.
+
 ## Concepts
 
 ### Curved World
