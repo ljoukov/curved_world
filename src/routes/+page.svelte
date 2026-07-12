@@ -81,13 +81,21 @@
 
   function handleRealtimeEvent(message: MessageEvent<string>) {
     const event = JSON.parse(message.data);
-    if (event.type === 'response.created') transcript = '';
-    if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') {
+    if (event.type === 'response.created') {
+      transcript = '';
+      setSpeaking(true);
+    }
+    if (
+      event.type === 'response.output_audio.delta' ||
+      event.type === 'response.audio.delta' ||
+      event.type === 'response.output_audio_transcript.delta'
+    ) {
       setSpeaking(true);
     }
     if (
       event.type === 'response.output_audio.done' ||
       event.type === 'response.audio.done' ||
+      event.type === 'response.cancelled' ||
       event.type === 'response.done'
     ) {
       setSpeaking(false);
@@ -96,6 +104,7 @@
       transcript += event.delta;
       tutor = { ...tutor, message: transcript.trim() };
     }
+    if (event.type === 'input_audio_buffer.speech_started') setSpeaking(false);
     if (event.type === 'error') {
       tutor = { ...tutor, message: event.error?.message ?? 'The voice link hit a wrinkle in space.' };
     }
@@ -123,11 +132,7 @@
       dataChannel = channel;
       channel.addEventListener('message', handleRealtimeEvent);
       channel.addEventListener('open', () => {
-        tutor = { ...tutor, isListening: true, mood: 'listening', message: 'Voice link live. Say hello.' };
-        channel.send(JSON.stringify({
-          type: 'response.create',
-          response: { instructions: 'Greet the learner warmly in one short sentence, then invite them to speak.' }
-        }));
+        tutor = { ...tutor, isListening: true, mood: 'listening', message: 'Voice link live. You may begin.' };
       });
 
       const offer = await pc.createOffer();
