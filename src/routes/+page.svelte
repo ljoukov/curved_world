@@ -13,6 +13,7 @@
   let tutor: TutorState = { ...initialTutorState };
   let professorImageFailed = false;
   let whiteboardImageFailed = false;
+  let whiteboardMode: 'curved' | 'flat' = 'curved';
   let undoCount = 0;
   let peerConnection: RTCPeerConnection | null = null;
   let dataChannel: RTCDataChannel | null = null;
@@ -144,19 +145,30 @@
     return `... ${words.slice(-10).join(' ')}`;
   }
 
-  function runExpressionTool(callId: string, name: string, rawArguments: string) {
-    if (name !== 'set_professor_expression' || !callId || handledToolCalls.has(callId)) return;
+  function runRealtimeTool(callId: string, name: string, rawArguments: string) {
+    if (!callId || handledToolCalls.has(callId)) return false;
+    if (name !== 'set_professor_expression' && name !== 'set_whiteboard_mode') return false;
     handledToolCalls.add(callId);
-    let requested: string = 'neutral-attentive';
+    let args: Record<string, string> = {};
     try {
-      requested = JSON.parse(rawArguments).expression;
+      args = JSON.parse(rawArguments);
     } catch {
-      requested = 'neutral-attentive';
+      args = {};
     }
-    if (requested in expressionFrames) {
-      professorExpression = requested as ProfessorExpression;
-      stopBlinkCycle();
-      if (!isSpeaking && professorExpression === 'neutral-attentive') scheduleBlink();
+
+    let output: Record<string, string | boolean>;
+    if (name === 'set_professor_expression') {
+      const requested = args.expression ?? 'neutral-attentive';
+      if (requested in expressionFrames) {
+        professorExpression = requested as ProfessorExpression;
+        stopBlinkCycle();
+        if (!isSpeaking && professorExpression === 'neutral-attentive') scheduleBlink();
+      }
+      output = { expression: professorExpression, applied: true };
+    } else {
+      whiteboardMode = args.mode === 'flat' ? 'flat' : 'curved';
+      whiteboardImageFailed = false;
+      output = { mode: whiteboardMode, applied: true };
     }
 
     dataChannel?.send(JSON.stringify({
@@ -164,15 +176,10 @@
       item: {
         type: 'function_call_output',
         call_id: callId,
-        output: JSON.stringify({ expression: professorExpression, applied: true })
+        output: JSON.stringify(output)
       }
     }));
-    dataChannel?.send(JSON.stringify({
-      type: 'response.create',
-      response: {
-        instructions: `The expression is now ${professorExpression}. Give the pending spoken answer now. Do not call set_professor_expression again for this user turn.`
-      }
-    }));
+    return true;
   }
 
   function handleRealtimeEvent(message: MessageEvent<string>) {
@@ -202,13 +209,23 @@
     }
     if (event.type === 'input_audio_buffer.speech_started') setSpeaking(false);
     if (event.type === 'response.function_call_arguments.done') {
-      runExpressionTool(event.call_id, event.name, event.arguments);
+      runRealtimeTool(event.call_id, event.name, event.arguments);
     }
     if (event.type === 'response.done') {
+      let hadToolCall = false;
       for (const item of event.response?.output ?? []) {
         if (item.type === 'function_call') {
-          runExpressionTool(item.call_id, item.name, item.arguments);
+          hadToolCall = true;
+          runRealtimeTool(item.call_id, item.name, item.arguments);
         }
+      }
+      if (hadToolCall) {
+        dataChannel?.send(JSON.stringify({
+          type: 'response.create',
+          response: {
+            instructions: 'The requested expression and whiteboard changes are now applied. Give the pending spoken answer. Do not call either visual tool again for this user turn.'
+          }
+        }));
       }
     }
     if (event.type === 'error') {
@@ -292,6 +309,7 @@
     transcript = '';
     handledToolCalls.clear();
     professorExpression = 'neutral-attentive';
+    whiteboardMode = 'curved';
     tutor = {
       ...initialTutorState,
       isListening: false,
@@ -381,8 +399,10 @@
       {#if !whiteboardImageFailed}
         <img
           class="whiteboard-image"
-          src="/images/hyperbolic-whiteboard.png"
-          alt={`A Poincaré disk showing a hyperbolic triangle with an angle sum of ${angleSum} degrees`}
+          src={whiteboardMode === 'flat' ? '/images/flat-whiteboard.png' : '/images/hyperbolic-whiteboard.png'}
+          alt={whiteboardMode === 'flat'
+            ? 'A pathological flat-space triangle visualization'
+            : `A curved-space triangle with an angle sum of ${angleSum} degrees`}
           style={`--flatness: ${Math.abs(curvature) < 0.15 ? 0.72 : 1}`}
           onerror={() => (whiteboardImageFailed = true)}
         />
