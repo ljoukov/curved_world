@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { feedbackFor, initialTutorState, toolHints, type ToolName, type TutorState } from '$lib/tutor';
 
   const tools: Array<{ id: ToolName; label: string }> = [
@@ -13,6 +14,24 @@
   let professorImageFailed = false;
   let whiteboardImageFailed = false;
   let undoCount = 0;
+  let peerConnection: RTCPeerConnection | null = null;
+  let dataChannel: RTCDataChannel | null = null;
+  let microphoneStream: MediaStream | null = null;
+  let remoteAudio: HTMLAudioElement | null = null;
+  let voiceConnecting = false;
+  let isSpeaking = false;
+  let talkingFrame = 0;
+  let talkingTimer: ReturnType<typeof setInterval> | null = null;
+  let transcript = '';
+
+  const idleProfessor = '/images/professor-bent-three-eyed/idle.png';
+  const talkingFrames = Array.from(
+    { length: 8 },
+    (_, index) => `/images/professor-bent-three-eyed/talking/${String(index + 1).padStart(2, '0')}-${[
+      'mouth-closed', 'mouth-small-open', 'mouth-ah', 'mouth-ee',
+      'mouth-oh', 'mouth-oo', 'mouth-fv', 'mouth-return'
+    ][index]}.png`
+  );
 
   $: angleSum = Math.round(180 + curvature * 37);
   $: radiusCoordinate = (0.347 + (-curvature - 1) * 0.07).toFixed(3);
@@ -47,16 +66,118 @@
     };
   }
 
-  function toggleListening() {
+  function setSpeaking(speaking: boolean) {
+    if (isSpeaking === speaking) return;
+    isSpeaking = speaking;
+    if (talkingTimer) clearInterval(talkingTimer);
+    talkingTimer = null;
+    talkingFrame = 0;
+    if (speaking) {
+      talkingTimer = setInterval(() => {
+        talkingFrame = (talkingFrame + 1) % talkingFrames.length;
+      }, 110);
+    }
+  }
+
+  function handleRealtimeEvent(message: MessageEvent<string>) {
+    const event = JSON.parse(message.data);
+    if (event.type === 'response.created') transcript = '';
+    if (event.type === 'response.output_audio.delta' || event.type === 'response.audio.delta') {
+      setSpeaking(true);
+    }
+    if (
+      event.type === 'response.output_audio.done' ||
+      event.type === 'response.audio.done' ||
+      event.type === 'response.done'
+    ) {
+      setSpeaking(false);
+    }
+    if (event.type === 'response.output_audio_transcript.delta' && event.delta) {
+      transcript += event.delta;
+      tutor = { ...tutor, message: transcript.trim() };
+    }
+    if (event.type === 'error') {
+      tutor = { ...tutor, message: event.error?.message ?? 'The voice link hit a wrinkle in space.' };
+    }
+  }
+
+  async function startVoice() {
+    voiceConnecting = true;
+    tutor = { ...tutor, message: 'Opening a live channel through curved space…' };
+    try {
+      const pc = new RTCPeerConnection();
+      peerConnection = pc;
+      const audio = new Audio();
+      audio.autoplay = true;
+      audio.muted = tutor.isMuted;
+      remoteAudio = audio;
+      pc.ontrack = (event) => {
+        audio.srcObject = event.streams[0];
+        void audio.play().catch(() => undefined);
+      };
+
+      microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      for (const track of microphoneStream.getTracks()) pc.addTrack(track, microphoneStream);
+
+      const channel = pc.createDataChannel('oai-events');
+      dataChannel = channel;
+      channel.addEventListener('message', handleRealtimeEvent);
+      channel.addEventListener('open', () => {
+        tutor = { ...tutor, isListening: true, mood: 'listening', message: 'Voice link live. Say hello.' };
+        channel.send(JSON.stringify({
+          type: 'response.create',
+          response: { instructions: 'Greet the learner warmly in one short sentence, then invite them to speak.' }
+        }));
+      });
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const response = await fetch('/api/realtime/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/sdp' },
+        body: offer.sdp
+      });
+      if (!response.ok) throw new Error(await response.text());
+      await pc.setRemoteDescription({ type: 'answer', sdp: await response.text() });
+    } catch (error) {
+      stopVoice();
+      tutor = { ...tutor, message: error instanceof Error ? error.message : 'Could not open the voice link.' };
+    } finally {
+      voiceConnecting = false;
+    }
+  }
+
+  function stopVoice() {
+    dataChannel?.close();
+    peerConnection?.close();
+    microphoneStream?.getTracks().forEach((track) => track.stop());
+    remoteAudio?.pause();
+    dataChannel = null;
+    peerConnection = null;
+    microphoneStream = null;
+    remoteAudio = null;
+    setSpeaking(false);
     tutor = {
       ...tutor,
-      isListening: !tutor.isListening,
-      mood: !tutor.isListening ? 'listening' : 'idle',
-      message: !tutor.isListening
-        ? 'I am listening across all available dimensions…'
-        : 'Voice link paused. Your secrets remain locally contained.'
+      isListening: false,
+      mood: 'idle',
+      message: 'Voice link paused. Your secrets remain locally contained.'
     };
   }
+
+  function toggleListening() {
+    if (voiceConnecting) return;
+    if (tutor.isListening || peerConnection) stopVoice();
+    else void startVoice();
+  }
+
+  function toggleMute() {
+    const isMuted = !tutor.isMuted;
+    tutor = { ...tutor, isMuted };
+    if (remoteAudio) remoteAudio.muted = isMuted;
+  }
+
+  onDestroy(stopVoice);
 </script>
 
 <svelte:head>
@@ -154,8 +275,9 @@
         {#if tutor.videoEnabled}
           {#if !professorImageFailed}
             <img
-              src="/images/professor-bent-classroom.png"
-              alt="Professor Bent, a blue hyperbolic geometry teacher"
+              class:speaking={isSpeaking}
+              src={isSpeaking ? talkingFrames[talkingFrame] : idleProfessor}
+              alt="Professor Bent, a three-eyed hyperbolic geometry teacher"
               onerror={() => (professorImageFailed = true)}
             />
           {:else}
@@ -179,7 +301,7 @@
         <button
           class:active={!tutor.isMuted}
           aria-label={tutor.isMuted ? 'Unmute Professor Bent' : 'Mute Professor Bent'}
-          onclick={() => (tutor = { ...tutor, isMuted: !tutor.isMuted })}
+          onclick={toggleMute}
         >{tutor.isMuted ? '🔇' : '◖))'}</button>
         <button
           class:active={tutor.videoEnabled}
@@ -208,7 +330,7 @@
       </button>
     </div>
 
-    <button class="voice-orb" class:listening={tutor.isListening} onclick={toggleListening} aria-label="Toggle future realtime voice tutor">
+    <button class="voice-orb" class:listening={tutor.isListening || voiceConnecting} onclick={toggleListening} aria-label="Toggle realtime voice tutor">
       <span></span><i></i>
     </button>
 
@@ -380,7 +502,8 @@
 
   .professor-panel { min-height: 0; border-radius: 24px; padding: 11px; display: grid; grid-template-rows: minmax(0, 1fr) auto; position: relative; }
   .video-window { min-height: 0; overflow: hidden; border: 2px solid #3d5360; border-radius: 14px 14px 0 0; background: radial-gradient(circle at 65% 45%, #174c5b, #071827 68%); position: relative; }
-  .video-window img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; display: block; }
+  .video-window img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; display: block; filter: drop-shadow(0 12px 20px rgba(0,0,0,.48)); }
+  .video-window img.speaking { filter: drop-shadow(0 12px 20px rgba(0,0,0,.48)) brightness(1.03); }
   .live-status { position: absolute; z-index: 3; top: 17px; left: 20px; color: var(--aqua); font-size: 21px; letter-spacing: .1em; font-weight: 700; text-shadow: 0 2px 4px #000; }
   .live-status i { display: inline-block; width: 13px; height: 13px; margin-right: 9px; background: var(--coral); border-radius: 50%; box-shadow: 0 0 10px var(--coral); animation: blink 2s infinite; }
   @keyframes blink { 50% { opacity: .35; } }
