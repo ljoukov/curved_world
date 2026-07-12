@@ -23,8 +23,20 @@
   let talkingFrame = 0;
   let talkingTimer: ReturnType<typeof setInterval> | null = null;
   let transcript = '';
+  let professorExpression: ProfessorExpression = 'neutral-attentive';
+  const handledToolCalls = new Set<string>();
 
-  const idleProfessor = '/images/professor-bent-three-eyed/idle.png';
+  const expressionFrames = {
+    'neutral-attentive': '/images/professor-bent-three-eyed/expressions/01-neutral-attentive.png',
+    'warm-happy': '/images/professor-bent-three-eyed/expressions/02-warm-happy.png',
+    delighted: '/images/professor-bent-three-eyed/expressions/03-delighted.png',
+    surprised: '/images/professor-bent-three-eyed/expressions/04-surprised.png',
+    concerned: '/images/professor-bent-three-eyed/expressions/05-concerned.png',
+    skeptical: '/images/professor-bent-three-eyed/expressions/06-skeptical.png',
+    thinking: '/images/professor-bent-three-eyed/expressions/07-thinking.png',
+    reassuring: '/images/professor-bent-three-eyed/expressions/08-reassuring.png'
+  } as const;
+  type ProfessorExpression = keyof typeof expressionFrames;
   const talkingFrames = Array.from(
     { length: 8 },
     (_, index) => `/images/professor-bent-three-eyed/talking/${String(index + 1).padStart(2, '0')}-${[
@@ -79,13 +91,40 @@
     }
   }
 
+  function runExpressionTool(callId: string, name: string, rawArguments: string) {
+    if (name !== 'set_professor_expression' || !callId || handledToolCalls.has(callId)) return;
+    handledToolCalls.add(callId);
+    let requested: string = 'neutral-attentive';
+    try {
+      requested = JSON.parse(rawArguments).expression;
+    } catch {
+      requested = 'neutral-attentive';
+    }
+    if (requested in expressionFrames) professorExpression = requested as ProfessorExpression;
+
+    dataChannel?.send(JSON.stringify({
+      type: 'conversation.item.create',
+      item: {
+        type: 'function_call_output',
+        call_id: callId,
+        output: JSON.stringify({ expression: professorExpression, applied: true })
+      }
+    }));
+    dataChannel?.send(JSON.stringify({
+      type: 'response.create',
+      response: {
+        instructions: `The expression is now ${professorExpression}. Give the pending spoken answer now. Do not call set_professor_expression again for this user turn.`
+      }
+    }));
+  }
+
   function handleRealtimeEvent(message: MessageEvent<string>) {
     const event = JSON.parse(message.data);
     if (event.type === 'response.created') {
       transcript = '';
-      setSpeaking(true);
     }
     if (
+      event.type === 'output_audio_buffer.started' ||
       event.type === 'response.output_audio.delta' ||
       event.type === 'response.audio.delta' ||
       event.type === 'response.output_audio_transcript.delta'
@@ -93,10 +132,10 @@
       setSpeaking(true);
     }
     if (
-      event.type === 'response.output_audio.done' ||
-      event.type === 'response.audio.done' ||
+      event.type === 'output_audio_buffer.stopped' ||
+      event.type === 'output_audio_buffer.cleared' ||
       event.type === 'response.cancelled' ||
-      event.type === 'response.done'
+      event.type === 'response.failed'
     ) {
       setSpeaking(false);
     }
@@ -105,6 +144,16 @@
       tutor = { ...tutor, message: transcript.trim() };
     }
     if (event.type === 'input_audio_buffer.speech_started') setSpeaking(false);
+    if (event.type === 'response.function_call_arguments.done') {
+      runExpressionTool(event.call_id, event.name, event.arguments);
+    }
+    if (event.type === 'response.done') {
+      for (const item of event.response?.output ?? []) {
+        if (item.type === 'function_call') {
+          runExpressionTool(item.call_id, item.name, item.arguments);
+        }
+      }
+    }
     if (event.type === 'error') {
       tutor = { ...tutor, message: event.error?.message ?? 'The voice link hit a wrinkle in space.' };
     }
@@ -281,7 +330,7 @@
           {#if !professorImageFailed}
             <img
               class:speaking={isSpeaking}
-              src={isSpeaking ? talkingFrames[talkingFrame] : idleProfessor}
+              src={isSpeaking ? talkingFrames[talkingFrame] : expressionFrames[professorExpression]}
               alt="Professor Bent, a three-eyed hyperbolic geometry teacher"
               onerror={() => (professorImageFailed = true)}
             />
