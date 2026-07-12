@@ -46,3 +46,19 @@ A reverse-causality classroom where consequences happen before their causes.
 ![Professor Tomorrow retroactive A+](concept-screens/professor-tomorrow/02-retroactive-a-plus.png)
 
 The complete image-generation prompts are in [concept-screens/PROMPTS.md](concept-screens/PROMPTS.md).
+
+## Professor Bent animation assets
+
+Professor Bent now has a dedicated speaking loop, a set of emotional reaction
+frames, and a rigged 3D version. The raster loops are ready to use in an
+ordinary `<img>` element; the GLB includes `Idle`, `Talk`, `Point`, and `Think`
+animation clips.
+
+![Professor Bent speaking](assets/professor-bent/professor-bent-main-loop.webp)
+
+![Professor Bent expression loop](assets/professor-bent/professor-bent-loop.webp)
+
+![Professor Bent 3D preview](assets/professor-bent/professor-bent-preview.png)
+
+See [the asset notes](assets/professor-bent/README.md) for individual frames,
+Three.js loading, and regeneration instructions.

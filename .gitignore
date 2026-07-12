@@ -6,3 +6,8 @@ build/
 !.env.example
 .DS_Store
 artifacts/
+
+*.blend1
+__pycache__/
+*.py[cod]
+tmp/

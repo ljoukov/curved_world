@@ -1,0 +1,265 @@
+{
+  "canvas_size": [
+    512,
+    640
+  ],
+  "talking_frames": [
+    {
+      "index": 1,
+      "file": "talking/01-mouth-closed.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          163.235,
+          136.986
+        ],
+        "lower_left": [
+          125.514,
+          193.92
+        ],
+        "lower_right": [
+          204.433,
+          197.065
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 151019,
+      "partially_transparent_pixels": 13618,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4609
+    },
+    {
+      "index": 2,
+      "file": "talking/02-mouth-small-open.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          163.697,
+          136.97
+        ],
+        "lower_left": [
+          125.821,
+          193.609
+        ],
+        "lower_right": [
+          205.241,
+          196.773
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 151776,
+      "partially_transparent_pixels": 12055,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4632
+    },
+    {
+      "index": 3,
+      "file": "talking/03-mouth-ah.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          164.689,
+          137.071
+        ],
+        "lower_left": [
+          126.805,
+          193.642
+        ],
+        "lower_right": [
+          205.757,
+          196.97
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 150884,
+      "partially_transparent_pixels": 12404,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4605
+    },
+    {
+      "index": 4,
+      "file": "talking/04-mouth-ee.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          162.425,
+          137.036
+        ],
+        "lower_left": [
+          124.978,
+          193.962
+        ],
+        "lower_right": [
+          203.678,
+          197.134
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 150438,
+      "partially_transparent_pixels": 13439,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4591
+    },
+    {
+      "index": 5,
+      "file": "talking/05-mouth-oh.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          163.215,
+          136.941
+        ],
+        "lower_left": [
+          125.559,
+          194.076
+        ],
+        "lower_right": [
+          204.231,
+          196.929
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 150530,
+      "partially_transparent_pixels": 12266,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4594
+    },
+    {
+      "index": 6,
+      "file": "talking/06-mouth-oo.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          162.811,
+          136.993
+        ],
+        "lower_left": [
+          125.045,
+          194.068
+        ],
+        "lower_right": [
+          203.814,
+          197.125
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 150984,
+      "partially_transparent_pixels": 12415,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4608
+    },
+    {
+      "index": 7,
+      "file": "talking/07-mouth-fv.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          163.013,
+          136.975
+        ],
+        "lower_left": [
+          125.233,
+          194.051
+        ],
+        "lower_right": [
+          203.725,
+          197.127
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 150618,
+      "partially_transparent_pixels": 12853,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4596
+    },
+    {
+      "index": 8,
+      "file": "talking/08-mouth-return.png",
+      "detected_pupils_before_alignment": {
+        "upper": [
+          162.173,
+          137.03
+        ],
+        "lower_left": [
+          124.493,
+          193.956
+        ],
+        "lower_right": [
+          203.362,
+          197.012
+        ]
+      },
+      "maximum_eye_registration_error_native_pixels": 0.0,
+      "transparent_pixels": 150861,
+      "partially_transparent_pixels": 11823,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4604
+    }
+  ],
+  "expression_frames": [
+    {
+      "index": 1,
+      "file": "expressions/01-neutral-attentive.png",
+      "transparent_pixels": 143420,
+      "partially_transparent_pixels": 12765,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4377
+    },
+    {
+      "index": 2,
+      "file": "expressions/02-warm-happy.png",
+      "transparent_pixels": 139425,
+      "partially_transparent_pixels": 14777,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4255
+    },
+    {
+      "index": 3,
+      "file": "expressions/03-delighted.png",
+      "transparent_pixels": 138059,
+      "partially_transparent_pixels": 13863,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4213
+    },
+    {
+      "index": 4,
+      "file": "expressions/04-surprised.png",
+      "transparent_pixels": 142460,
+      "partially_transparent_pixels": 12981,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4348
+    },
+    {
+      "index": 5,
+      "file": "expressions/05-concerned.png",
+      "transparent_pixels": 144173,
+      "partially_transparent_pixels": 12800,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.44
+    },
+    {
+      "index": 6,
+      "file": "expressions/06-skeptical.png",
+      "transparent_pixels": 141185,
+      "partially_transparent_pixels": 14288,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4309
+    },
+    {
+      "index": 7,
+      "file": "expressions/07-thinking.png",
+      "transparent_pixels": 141470,
+      "partially_transparent_pixels": 13375,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4317
+    },
+    {
+      "index": 8,
+      "file": "expressions/08-reassuring.png",
+      "transparent_pixels": 145439,
+      "partially_transparent_pixels": 12742,
+      "magenta_residue_pixels": 0,
+      "transparent_fraction": 0.4438
+    }
+  ],
+  "summary": {
+    "talking_frame_count": 8,
+    "expression_frame_count": 8,
+    "maximum_redetected_pupil_drift_pixels": 0.571,
+    "maximum_allowed_pupil_drift_pixels": 1.0,
+    "magenta_residue_pixels": 0
+  }
+}

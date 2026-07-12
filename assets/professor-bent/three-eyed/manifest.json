@@ -1,0 +1,33 @@
+{
+  "canvas": {
+    "width": 512,
+    "height": 640
+  },
+  "talking": {
+    "frameDurationMs": 110,
+    "loop": true,
+    "frames": [
+      "talking/01-mouth-closed.png",
+      "talking/02-mouth-small-open.png",
+      "talking/03-mouth-ah.png",
+      "talking/04-mouth-ee.png",
+      "talking/05-mouth-oh.png",
+      "talking/06-mouth-oo.png",
+      "talking/07-mouth-fv.png",
+      "talking/08-mouth-return.png"
+    ],
+    "preview": "talking-loop.png"
+  },
+  "expressions": {
+    "frames": [
+      "expressions/01-neutral-attentive.png",
+      "expressions/02-warm-happy.png",
+      "expressions/03-delighted.png",
+      "expressions/04-surprised.png",
+      "expressions/05-concerned.png",
+      "expressions/06-skeptical.png",
+      "expressions/07-thinking.png",
+      "expressions/08-reassuring.png"
+    ]
+  }
+}
