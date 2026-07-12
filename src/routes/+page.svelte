@@ -285,7 +285,18 @@
     if (remoteAudio) remoteAudio.muted = isMuted;
   }
 
-  onMount(scheduleBlink);
+  onMount(() => {
+    transcript = '';
+    handledToolCalls.clear();
+    professorExpression = 'neutral-attentive';
+    tutor = {
+      ...initialTutorState,
+      isListening: false,
+      mood: 'idle',
+      message: 'Voice link idle. You may begin.'
+    };
+    scheduleBlink();
+  });
   onDestroy(() => {
     stopVoice();
     if (blinkScheduleTimer) clearTimeout(blinkScheduleTimer);
