@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { feedbackFor, initialTutorState, toolHints, type ToolName, type TutorState } from '$lib/tutor';
 
   const tools: Array<{ id: ToolName; label: string }> = [
@@ -25,6 +25,10 @@
   let transcript = '';
   let professorExpression: ProfessorExpression = 'neutral-attentive';
   const handledToolCalls = new Set<string>();
+  let isBlinking = false;
+  let blinkingFrame = 0;
+  let blinkScheduleTimer: ReturnType<typeof setTimeout> | null = null;
+  let blinkFrameTimer: ReturnType<typeof setTimeout> | null = null;
 
   const expressionFrames = {
     'neutral-attentive': '/images/professor-bent-three-eyed/expressions/01-neutral-attentive.png',
@@ -44,6 +48,15 @@
       'mouth-oh', 'mouth-oo', 'mouth-fv', 'mouth-return'
     ][index]}.png`
   );
+  const blinkingFrames = [
+    '/images/professor-bent-three-eyed/blinking/01-eyes-open.png',
+    '/images/professor-bent-three-eyed/blinking/02-blink-quarter.png',
+    '/images/professor-bent-three-eyed/blinking/03-blink-mostly-closed.png',
+    '/images/professor-bent-three-eyed/blinking/04-eyes-closed.png',
+    '/images/professor-bent-three-eyed/blinking/05-blink-opening.png',
+    '/images/professor-bent-three-eyed/blinking/06-blink-nearly-open.png'
+  ];
+  const blinkingDurations = [45, 70, 70, 120, 70, 70];
 
   $: angleSum = Math.round(180 + curvature * 37);
   $: radiusCoordinate = (0.347 + (-curvature - 1) * 0.07).toFixed(3);
@@ -85,10 +98,51 @@
     talkingTimer = null;
     talkingFrame = 0;
     if (speaking) {
+      stopBlinkPlayback();
       talkingTimer = setInterval(() => {
         talkingFrame = (talkingFrame + 1) % talkingFrames.length;
       }, 110);
+    } else {
+      scheduleBlink();
     }
+  }
+
+  function stopBlinkPlayback() {
+    if (blinkFrameTimer) clearTimeout(blinkFrameTimer);
+    blinkFrameTimer = null;
+    isBlinking = false;
+    blinkingFrame = 0;
+  }
+
+  function playBlinkFrame(index: number) {
+    if (isSpeaking) {
+      stopBlinkPlayback();
+      scheduleBlink();
+      return;
+    }
+    if (index >= blinkingFrames.length) {
+      stopBlinkPlayback();
+      scheduleBlink();
+      return;
+    }
+    isBlinking = true;
+    blinkingFrame = index;
+    blinkFrameTimer = setTimeout(() => playBlinkFrame(index + 1), blinkingDurations[index]);
+  }
+
+  function scheduleBlink() {
+    if (blinkScheduleTimer) clearTimeout(blinkScheduleTimer);
+    blinkScheduleTimer = setTimeout(() => {
+      blinkScheduleTimer = null;
+      if (isSpeaking) scheduleBlink();
+      else playBlinkFrame(0);
+    }, 2000 + Math.random() * 2000);
+  }
+
+  function lastTenWords(value: string) {
+    const words = value.trim().split(/\s+/).filter(Boolean);
+    if (words.length <= 10) return words.join(' ');
+    return `... ${words.slice(-10).join(' ')}`;
   }
 
   function runExpressionTool(callId: string, name: string, rawArguments: string) {
@@ -141,7 +195,7 @@
     }
     if (event.type === 'response.output_audio_transcript.delta' && event.delta) {
       transcript += event.delta;
-      tutor = { ...tutor, message: transcript.trim() };
+      tutor = { ...tutor, message: lastTenWords(transcript) };
     }
     if (event.type === 'input_audio_buffer.speech_started') setSpeaking(false);
     if (event.type === 'response.function_call_arguments.done') {
@@ -231,7 +285,12 @@
     if (remoteAudio) remoteAudio.muted = isMuted;
   }
 
-  onDestroy(stopVoice);
+  onMount(scheduleBlink);
+  onDestroy(() => {
+    stopVoice();
+    if (blinkScheduleTimer) clearTimeout(blinkScheduleTimer);
+    stopBlinkPlayback();
+  });
 </script>
 
 <svelte:head>
@@ -330,7 +389,11 @@
           {#if !professorImageFailed}
             <img
               class:speaking={isSpeaking}
-              src={isSpeaking ? talkingFrames[talkingFrame] : expressionFrames[professorExpression]}
+              src={isSpeaking
+                ? talkingFrames[talkingFrame]
+                : isBlinking
+                  ? blinkingFrames[blinkingFrame]
+                  : expressionFrames[professorExpression]}
               alt="Professor Bent, a three-eyed hyperbolic geometry teacher"
               onerror={() => (professorImageFailed = true)}
             />

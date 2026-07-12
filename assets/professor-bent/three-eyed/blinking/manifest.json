@@ -1,0 +1,34 @@
+{
+  "isolated": true,
+  "canvas": {
+    "width": 512,
+    "height": 640
+  },
+  "frames": [
+    {
+      "file": "01-eyes-open.png",
+      "durationMs": 700
+    },
+    {
+      "file": "02-blink-quarter.png",
+      "durationMs": 70
+    },
+    {
+      "file": "03-blink-mostly-closed.png",
+      "durationMs": 70
+    },
+    {
+      "file": "04-eyes-closed.png",
+      "durationMs": 120
+    },
+    {
+      "file": "05-blink-opening.png",
+      "durationMs": 70
+    },
+    {
+      "file": "06-blink-nearly-open.png",
+      "durationMs": 70
+    }
+  ],
+  "preview": "blink-loop.png"
+}

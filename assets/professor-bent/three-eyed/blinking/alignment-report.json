@@ -1,0 +1,67 @@
+{
+  "canvas": [
+    512,
+    640
+  ],
+  "source_open_eye_centers": {
+    "upper": [
+      222.553,
+      219.266
+    ],
+    "lower_left": [
+      181.151,
+      283.82
+    ],
+    "lower_right": [
+      271.035,
+      286.999
+    ]
+  },
+  "target_talking_eye_centers": {
+    "upper": [
+      199.74,
+      196.623
+    ],
+    "lower_left": [
+      153.861,
+      267.612
+    ],
+    "lower_right": [
+      249.948,
+      270.603
+    ]
+  },
+  "frames": [
+    {
+      "file": "01-eyes-open.png",
+      "transparent_fraction": 0.5063,
+      "magenta_residue_pixels": 0
+    },
+    {
+      "file": "02-blink-quarter.png",
+      "transparent_fraction": 0.5058,
+      "magenta_residue_pixels": 0
+    },
+    {
+      "file": "03-blink-mostly-closed.png",
+      "transparent_fraction": 0.5064,
+      "magenta_residue_pixels": 0
+    },
+    {
+      "file": "04-eyes-closed.png",
+      "transparent_fraction": 0.5054,
+      "magenta_residue_pixels": 0
+    },
+    {
+      "file": "05-blink-opening.png",
+      "transparent_fraction": 0.5048,
+      "magenta_residue_pixels": 0
+    },
+    {
+      "file": "06-blink-nearly-open.png",
+      "transparent_fraction": 0.5057,
+      "magenta_residue_pixels": 0
+    }
+  ],
+  "maximum_open_eye_anchor_error_pixels": 1.102
+}
