@@ -166,9 +166,10 @@
       }
       output = { expression: professorExpression, applied: true };
     } else {
-      whiteboardMode = args.mode === 'flat' ? 'flat' : 'curved';
+      const requestedMode = args.mode === 'pathology' ? 'pathology' : 'real-world';
+      whiteboardMode = requestedMode === 'pathology' ? 'flat' : 'curved';
       whiteboardImageFailed = false;
-      output = { mode: whiteboardMode, applied: true };
+      output = { mode: requestedMode, applied: true };
     }
 
     dataChannel?.send(JSON.stringify({
