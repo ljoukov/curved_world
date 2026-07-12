@@ -154,6 +154,16 @@ def transform(frame: Image.Image, forward: np.ndarray) -> Image.Image:
     )
 
 
+def upper_body_centroid(frame: Image.Image) -> tuple[float, float]:
+    """Return a stable face/hair centroid, excluding variable lower crop edges."""
+    alpha = np.asarray(frame, dtype=np.float64)[:400, :, 3] / 255.0
+    yy, xx = np.mgrid[: alpha.shape[0], : alpha.shape[1]]
+    total = float(alpha.sum())
+    if total <= 0:
+        raise RuntimeError("Cannot align an empty blink frame")
+    return float((alpha * xx).sum() / total), float((alpha * yy).sum() / total)
+
+
 def validate(frame: Image.Image, name: str) -> dict[str, float | int]:
     if frame.mode != "RGBA" or frame.size != CANVAS:
         raise RuntimeError(f"{name} has unexpected mode or size")
@@ -190,12 +200,35 @@ def main() -> None:
         "frames": [],
     }
 
+    # The image-generation sheet has a consistent per-column horizontal drift.
+    # Register every cell to frame zero after the shared three-eye transform,
+    # then combine both transforms so each final frame is resampled only once.
+    rough_outputs = [remove_residual_magenta(transform(frame, forward)) for frame in frames]
+    target_centroid = upper_body_centroid(rough_outputs[0])
+
     outputs: list[Image.Image] = []
-    for name, frame in zip(FRAME_NAMES, frames):
-        aligned = remove_residual_magenta(transform(frame, forward))
+    for name, frame, rough in zip(FRAME_NAMES, frames, rough_outputs):
+        centroid = upper_body_centroid(rough)
+        dx = target_centroid[0] - centroid[0]
+        dy = target_centroid[1] - centroid[1]
+        correction = np.array(
+            [[1.0, 0.0, dx], [0.0, 1.0, dy], [0.0, 0.0, 1.0]],
+            dtype=np.float64,
+        )
+        aligned = remove_residual_magenta(transform(frame, correction @ forward))
         aligned.save(HERE / name, optimize=True)
         outputs.append(aligned)
-        report["frames"].append({"file": name, **validate(aligned, name)})
+        report["frames"].append(
+            {
+                "file": name,
+                "upper_body_alignment_offset": [round(dx, 3), round(dy, 3)],
+                "upper_body_centroid": [
+                    round(upper_body_centroid(aligned)[0], 3),
+                    round(upper_body_centroid(aligned)[1], 3),
+                ],
+                **validate(aligned, name),
+            }
+        )
 
     final_open = detect_three(outputs[0])
     maximum_open_eye_error = max(

@@ -34,32 +34,80 @@
   "frames": [
     {
       "file": "01-eyes-open.png",
+      "upper_body_alignment_offset": [
+        0.0,
+        0.0
+      ],
+      "upper_body_centroid": [
+        249.654,
+        242.976
+      ],
       "transparent_fraction": 0.5063,
       "magenta_residue_pixels": 0
     },
     {
       "file": "02-blink-quarter.png",
-      "transparent_fraction": 0.5058,
+      "upper_body_alignment_offset": [
+        11.524,
+        -0.019
+      ],
+      "upper_body_centroid": [
+        249.651,
+        242.99
+      ],
+      "transparent_fraction": 0.5051,
       "magenta_residue_pixels": 0
     },
     {
       "file": "03-blink-mostly-closed.png",
-      "transparent_fraction": 0.5064,
+      "upper_body_alignment_offset": [
+        16.767,
+        -0.163
+      ],
+      "upper_body_centroid": [
+        249.657,
+        243.047
+      ],
+      "transparent_fraction": 0.5055,
       "magenta_residue_pixels": 0
     },
     {
       "file": "04-eyes-closed.png",
-      "transparent_fraction": 0.5054,
+      "upper_body_alignment_offset": [
+        0.107,
+        0.335
+      ],
+      "upper_body_centroid": [
+        249.655,
+        242.821
+      ],
+      "transparent_fraction": 0.5057,
       "magenta_residue_pixels": 0
     },
     {
       "file": "05-blink-opening.png",
-      "transparent_fraction": 0.5048,
+      "upper_body_alignment_offset": [
+        11.547,
+        0.348
+      ],
+      "upper_body_centroid": [
+        249.647,
+        242.822
+      ],
+      "transparent_fraction": 0.5041,
       "magenta_residue_pixels": 0
     },
     {
       "file": "06-blink-nearly-open.png",
-      "transparent_fraction": 0.5057,
+      "upper_body_alignment_offset": [
+        16.858,
+        0.245
+      ],
+      "upper_body_centroid": [
+        249.649,
+        242.864
+      ],
+      "transparent_fraction": 0.5047,
       "magenta_residue_pixels": 0
     }
   ],
