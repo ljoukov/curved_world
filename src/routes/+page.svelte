@@ -25,7 +25,6 @@
   let transcript = '';
   let professorExpression: ProfessorExpression = 'neutral-attentive';
   const handledToolCalls = new Set<string>();
-  let isBlinking = false;
   let blinkingFrame = 0;
   let blinkScheduleTimer: ReturnType<typeof setTimeout> | null = null;
   let blinkFrameTimer: ReturnType<typeof setTimeout> | null = null;
@@ -56,7 +55,7 @@
     '/images/professor-bent-three-eyed/blinking/05-blink-opening.png',
     '/images/professor-bent-three-eyed/blinking/06-blink-nearly-open.png'
   ];
-  const blinkingDurations = [45, 70, 70, 120, 70, 70];
+  const blinkingDurations = [0, 70, 70, 120, 70, 70];
 
   $: angleSum = Math.round(180 + curvature * 37);
   $: radiusCoordinate = (0.347 + (-curvature - 1) * 0.07).toFixed(3);
@@ -98,44 +97,44 @@
     talkingTimer = null;
     talkingFrame = 0;
     if (speaking) {
-      stopBlinkPlayback();
+      stopBlinkCycle();
       talkingTimer = setInterval(() => {
         talkingFrame = (talkingFrame + 1) % talkingFrames.length;
       }, 110);
-    } else {
+    } else if (professorExpression === 'neutral-attentive') {
       scheduleBlink();
     }
   }
 
-  function stopBlinkPlayback() {
+  function stopBlinkCycle() {
+    if (blinkScheduleTimer) clearTimeout(blinkScheduleTimer);
+    blinkScheduleTimer = null;
     if (blinkFrameTimer) clearTimeout(blinkFrameTimer);
     blinkFrameTimer = null;
-    isBlinking = false;
     blinkingFrame = 0;
   }
 
   function playBlinkFrame(index: number) {
-    if (isSpeaking) {
-      stopBlinkPlayback();
-      scheduleBlink();
+    if (isSpeaking || professorExpression !== 'neutral-attentive') {
+      stopBlinkCycle();
       return;
     }
     if (index >= blinkingFrames.length) {
-      stopBlinkPlayback();
+      blinkingFrame = 0;
       scheduleBlink();
       return;
     }
-    isBlinking = true;
     blinkingFrame = index;
     blinkFrameTimer = setTimeout(() => playBlinkFrame(index + 1), blinkingDurations[index]);
   }
 
   function scheduleBlink() {
     if (blinkScheduleTimer) clearTimeout(blinkScheduleTimer);
+    blinkingFrame = 0;
+    if (isSpeaking || professorExpression !== 'neutral-attentive') return;
     blinkScheduleTimer = setTimeout(() => {
       blinkScheduleTimer = null;
-      if (isSpeaking) scheduleBlink();
-      else playBlinkFrame(0);
+      playBlinkFrame(1);
     }, 2000 + Math.random() * 2000);
   }
 
@@ -154,7 +153,11 @@
     } catch {
       requested = 'neutral-attentive';
     }
-    if (requested in expressionFrames) professorExpression = requested as ProfessorExpression;
+    if (requested in expressionFrames) {
+      professorExpression = requested as ProfessorExpression;
+      stopBlinkCycle();
+      if (!isSpeaking && professorExpression === 'neutral-attentive') scheduleBlink();
+    }
 
     dataChannel?.send(JSON.stringify({
       type: 'conversation.item.create',
@@ -299,8 +302,7 @@
   });
   onDestroy(() => {
     stopVoice();
-    if (blinkScheduleTimer) clearTimeout(blinkScheduleTimer);
-    stopBlinkPlayback();
+    stopBlinkCycle();
   });
 </script>
 
@@ -402,7 +404,7 @@
               class:speaking={isSpeaking}
               src={isSpeaking
                 ? talkingFrames[talkingFrame]
-                : isBlinking
+                : professorExpression === 'neutral-attentive'
                   ? blinkingFrames[blinkingFrame]
                   : expressionFrames[professorExpression]}
               alt="Professor Bent, a three-eyed hyperbolic geometry teacher"
